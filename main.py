@@ -61,8 +61,8 @@ def chat_with_agent():
         dialogflow_payload = {
             "queryInput": {
                 "text": {
-                    "text: user_message,
-                    "languageCode: 'en-US', # Match your agent's language
+                    "text": user_message, # Corrected: 'text' key is now properly quoted
+                    "languageCode": 'en-US', # Corrected: 'languageCode' key is now properly quoted
                 },
             },
             "sessionId": session_id,
