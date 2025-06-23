@@ -1,3 +1,4 @@
 Flask
 google-auth
 requests
+flask-cors
