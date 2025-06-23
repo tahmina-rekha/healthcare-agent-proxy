@@ -1,11 +1,15 @@
-# main.py (for your new Cloud Run service, e.g., 'agent-proxy-service')
+# main.py (for your 'agent-proxy-service' Cloud Run service)
 import os
 import json
 from flask import Flask, request, jsonify
+from flask_cors import CORS # Import CORS
+
+# Ensure google-auth and requests are installed via requirements.txt
 from google.auth import default
-from google.auth.transport.requests import Request as GoogleAuthRequest # Rename to avoid conflict with Flask's request
+from google.auth.transport.requests import Request as GoogleAuthRequest
 
 app = Flask(__name__)
+CORS(app) # Enable CORS for your Flask app, allowing requests from any origin
 
 # This is the primary endpoint your frontend will call
 @app.route('/chat_with_agent', methods=['POST'])
@@ -33,6 +37,7 @@ def chat_with_agent():
         dialogflow_api_url = f"https://{location}-dialogflow.googleapis.com/v3/projects/{project_id}/locations/{location}/agents/{agent_id}:predict"
 
         # Get Google Cloud credentials automatically from the environment (Cloud Run handles this)
+        # These credentials are for the Cloud Run service account, allowing it to call Dialogflow.
         credentials, project = default()
         auth_req = GoogleAuthRequest()
         credentials.refresh(auth_req) # Ensure credentials are fresh
@@ -49,14 +54,13 @@ def chat_with_agent():
         }
 
         # Make the request to the Dialogflow API
-        # Using GoogleAuthRequest for authenticated fetch
+        # Using Python's built-in requests library (you'll need to add it to requirements.txt)
+        import requests
         headers = {
             'Authorization': f'Bearer {credentials.token}',
             'Content-Type': 'application/json'
         }
         
-        # Use Python's built-in requests library (you'll need to add it to requirements.txt)
-        import requests
         dialogflow_response = requests.post(dialogflow_api_url, headers=headers, json=dialogflow_payload)
         dialogflow_response.raise_for_status() # Raise an HTTPError for bad responses (4xx or 5xx)
 
@@ -81,4 +85,3 @@ def chat_with_agent():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
     app.run(debug=True, host='0.0.0.0', port=port)
-
