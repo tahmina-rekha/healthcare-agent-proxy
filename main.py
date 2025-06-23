@@ -11,6 +11,19 @@ from google.auth.transport.requests import Request as GoogleAuthRequest
 app = Flask(__name__)
 CORS(app) # Enable CORS for your Flask app, allowing requests from any origin
 
+# NEW: Add a simple root route to handle OPTIONS/GET requests to the base URL
+# This is crucial for CORS preflight requests that might hit the root.
+@app.route('/', methods=['GET', 'OPTIONS'])
+def hello_world():
+    """
+    A simple root endpoint to confirm the service is running and to handle
+    CORS preflight (OPTIONS) requests to the base URL.
+    """
+    if request.method == 'OPTIONS':
+        # CORS preflight will be handled by flask_cors automatically due to CORS(app)
+        return '', 204 # No Content
+    return jsonify({"message": "Agent proxy service is running!"}), 200
+
 # This is the primary endpoint your frontend will call
 @app.route('/chat_with_agent', methods=['POST'])
 def chat_with_agent():
@@ -38,6 +51,8 @@ def chat_with_agent():
 
         # Get Google Cloud credentials automatically from the environment (Cloud Run handles this)
         # These credentials are for the Cloud Run service account, allowing it to call Dialogflow.
+        from google.auth import default
+        from google.auth.transport.requests import Request as GoogleAuthRequest # Renamed for clarity if 'requests' is also imported
         credentials, project = default()
         auth_req = GoogleAuthRequest()
         credentials.refresh(auth_req) # Ensure credentials are fresh
@@ -46,15 +61,14 @@ def chat_with_agent():
         dialogflow_payload = {
             "queryInput": {
                 "text": {
-                    "text": user_message,
-                    "languageCode": "en-US", # Match your agent's language
+                    "text: user_message,
+                    "languageCode: 'en-US', # Match your agent's language
                 },
             },
             "sessionId": session_id,
         }
 
         # Make the request to the Dialogflow API
-        # Using Python's built-in requests library (you'll need to add it to requirements.txt)
         import requests
         headers = {
             'Authorization': f'Bearer {credentials.token}',
